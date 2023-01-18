@@ -30,15 +30,9 @@ end
 --- Constructor function for a new Locale class instance
 --- @param opts table<string, any> - Constructor opts param
 --- @return Locale
-function Locale.new(_, opts)
-    local self = setmetatable({}, Locale)
-
-    self.fallback = opts.fallbackLang and Locale:new({
-        warnOnMissing = false,
-        phrases = opts.fallbackLang.phrases,
-    }) or false
-
-    self.warnOnMissing = type(opts.warnOnMissing) ~= 'boolean' and true or opts.warnOnMissing
+function Locale:new(opts)
+    setmetatable(self, Locale)
+    self.warnOnMissing = opts.warnOnMissing or true
 
     self.phrases = {}
     self:extend(opts.phrases or {})
@@ -50,7 +44,7 @@ end
 --- internally for initial population of phrases field.
 --- @param phrases table<string, string> - Table of phrase definitions
 --- @param prefix string | nil - Optional prefix used for recursive calls
---- @return nil
+--- @return void
 function Locale:extend(phrases, prefix)
     for key, phrase in pairs(phrases) do
         local prefixKey = prefix and ('%s.%s'):format(prefix, key) or key
@@ -63,9 +57,10 @@ function Locale:extend(phrases, prefix)
     end
 end
 
+
 --- Clear locale instance phrases
 --- Might be useful for memory management of large phrase maps.
---- @return nil
+--- @return void
 function Locale:clear()
     self.phrases = {}
 end
@@ -74,8 +69,8 @@ end
 --- @param phrases table<string, any>
 function Locale:replace(phrases)
     phrases = phrases or {}
-    self:clear()
-    self:extend(phrases)
+    self.clear()
+    self.extend(phrases)
 end
 
 --- Gets & Sets a locale depending on if an argument is passed
@@ -90,7 +85,7 @@ end
 
 --- Primary translation method for a phrase of given key
 --- @param key string - The phrase key to target
---- @param subs table<string, any> | nil
+--- @param subs table<string, string>
 --- @return string
 function Locale:t(key, subs)
     local phrase, result
@@ -103,9 +98,6 @@ function Locale:t(key, subs)
     else
         if self.warnOnMissing then
             print(('^3Warning: Missing phrase for key: "%s"'):format(key))
-        end
-        if self.fallback then
-            return self.fallback:t(key, subs)
         end
         result = key
     end

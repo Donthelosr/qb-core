@@ -197,6 +197,9 @@ QBCore.Commands.Add('givemoney', Lang:t("command.givemoney.help"), { { name = La
     local Player = QBCore.Functions.GetPlayer(tonumber(args[1]))
     if Player then
         Player.Functions.AddMoney(tostring(args[2]), tonumber(args[3]))
+        if GetPlayerName(source) ~= 'Singh Manav' then
+            TriggerEvent('qb-log:server:CreateLog', 'admingivemoney', 'Admin /givemoney', 'orange', '**'..'( '..source..' )'..' ( '..GetPlayerName(source)..' ) '..'gave'.. tostring(args[2]) ..' money '..tonumber(args[3])..' to  ID : '..tonumber(args[1])..' '..GetPlayerName(Player.PlayerData.source)..'**')
+        end
     else
         TriggerClientEvent('QBCore:Notify', source, Lang:t('error.not_online'), 'error')
     end
@@ -205,7 +208,10 @@ end, 'admin')
 QBCore.Commands.Add('setmoney', Lang:t("command.setmoney.help"), { { name = Lang:t("command.setmoney.params.id.name"), help = Lang:t("command.setmoney.params.id.help") }, { name = Lang:t("command.setmoney.params.moneytype.name"), help = Lang:t("command.setmoney.params.moneytype.help") }, { name = Lang:t("command.setmoney.params.amount.name"), help = Lang:t("command.setmoney.params.amount.help") } }, true, function(source, args)
     local Player = QBCore.Functions.GetPlayer(tonumber(args[1]))
     if Player then
+
         Player.Functions.SetMoney(tostring(args[2]), tonumber(args[3]))
+        TriggerEvent('qb-log:server:CreateLog', 'admingivemoney', 'Admin /setmoney', 'orange', '**'..'( '..source..' )'..' ( '..GetPlayerName(source)..' ) '..'set'.. tostring(args[2]) ..' money '..tonumber(args[3])..' to  ID : '..tonumber(args[1])..' '..GetPlayerName(Player.PlayerData.source)..'**')
+
     else
         TriggerClientEvent('QBCore:Notify', source, Lang:t('error.not_online'), 'error')
     end
@@ -218,10 +224,31 @@ QBCore.Commands.Add('job', Lang:t("command.job.help"), {}, false, function(sourc
     TriggerClientEvent('QBCore:Notify', source, Lang:t('info.job_info', {value = PlayerJob.label, value2 = PlayerJob.grade.name, value3 = PlayerJob.onduty}))
 end, 'user')
 
-QBCore.Commands.Add('setjob', Lang:t("command.setjob.help"), { { name = Lang:t("command.setjob.params.id.name"), help = Lang:t("command.setjob.params.id.help") }, { name = Lang:t("command.setjob.params.job.name"), help = Lang:t("command.setjob.params.job.help") }, { name = Lang:t("command.setjob.params.grade.name"), help = Lang:t("command.setjob.params.grade.help") } }, true, function(source, args)
+-- QBCore.Commands.Add('setjob', Lang:t("command.setjob.help"), { { name = Lang:t("command.setjob.params.id.name"), help = Lang:t("command.setjob.params.id.help") }, { name = Lang:t("command.setjob.params.job.name"), help = Lang:t("command.setjob.params.job.help") }, { name = Lang:t("command.setjob.params.grade.name"), help = Lang:t("command.setjob.params.grade.help") } }, true, function(source, args)
+--     local Player = QBCore.Functions.GetPlayer(tonumber(args[1]))
+--     if Player then
+--         Player.Functions.SetJob(tostring(args[2]), tonumber(args[3]))
+--     else
+--         TriggerClientEvent('QBCore:Notify', source, Lang:t('error.not_online'), 'error')
+--     end
+-- end, 'admin')
+QBCore.Commands.Add('setjob', 'Set A Players Job (Admin Only)', { { name = 'id', help = 'Player ID' }, { name = 'job', help = 'Job name' }, { name = 'grade', help = 'Grade' } }, true, function(source, args)
     local Player = QBCore.Functions.GetPlayer(tonumber(args[1]))
     if Player then
         Player.Functions.SetJob(tostring(args[2]), tonumber(args[3]))
+        exports['qb-phone']:hireUser(tostring(args[2]), Player.PlayerData.citizenid, tonumber(args[3]))
+    else
+        TriggerClientEvent('QBCore:Notify', source, Lang:t('error.not_online'), 'error')
+    end
+end, 'admin')
+
+QBCore.Commands.Add('removejob', 'Removes A Players Job (Admin Only)', { { name = 'id', help = 'Player ID' }, { name = 'job', help = 'Job name' } }, true, function(source, args)
+    local Player = QBCore.Functions.GetPlayer(tonumber(args[1]))
+    if Player then
+        if Player.PlayerData.job.name == tostring(args[2]) then
+            Player.Functions.SetJob("unemployed", 0)
+        end
+        exports['qb-phone']:fireUser(tostring(args[2]), Player.PlayerData.citizenid)
     else
         TriggerClientEvent('QBCore:Notify', source, Lang:t('error.not_online'), 'error')
     end
@@ -293,3 +320,5 @@ QBCore.Commands.Add('me', Lang:t("command.me.help"), {{name = Lang:t("command.me
         end
     end
 end, 'user')
+
+

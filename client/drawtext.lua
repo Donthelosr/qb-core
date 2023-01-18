@@ -58,3 +58,5 @@ exports('DrawText', drawText)
 exports('ChangeText', changeText)
 exports('HideText', hideText)
 exports('KeyPressed', keyPressed)
+
+

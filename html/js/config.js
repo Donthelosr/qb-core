@@ -13,19 +13,19 @@ export const DEV_MODE = false;
  * Will hold config statically outside of Vue state
  * @property {Record<string, NotiVariantData>} VariantDefinitions
  * @property {Record<string, any>} NotificationStyling
- **/
+ * */
 export let NOTIFY_CONFIG = null;
 
 /**
  * Pure function taking a notification type and returning an object
  * with style details
- * @param {string} variant
+ * @param variant {string}
  * @returns NotiVariantData
  **/
 export const determineStyleFromVariant = (variant) => {
   const variantData = NOTIFY_CONFIG.VariantDefinitions[variant];
-  if (!variantData)
-    throw new Error(`Style of type: ${variant}, does not exist in the config`);
+  // if (!variantData)
+  //   throw new Error(`Style of type: ${variant}, does not exist in the config`);
   return variantData;
 };
 

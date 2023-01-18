@@ -91,6 +91,7 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
     PlayerData.metadata['thirst'] = PlayerData.metadata['thirst'] or 100
     PlayerData.metadata['stress'] = PlayerData.metadata['stress'] or 0
     PlayerData.metadata['isdead'] = PlayerData.metadata['isdead'] or false
+    PlayerData.metadata['health'] = PlayerData.metadata['health'] or 200
     PlayerData.metadata['inlaststand'] = PlayerData.metadata['inlaststand'] or false
     PlayerData.metadata['armor'] = PlayerData.metadata['armor'] or 0
     PlayerData.metadata['ishandcuffed'] = PlayerData.metadata['ishandcuffed'] or false
@@ -104,6 +105,14 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
     PlayerData.metadata['bloodtype'] = PlayerData.metadata['bloodtype'] or QBCore.Config.Player.Bloodtypes[math.random(1, #QBCore.Config.Player.Bloodtypes)]
     PlayerData.metadata['dealerrep'] = PlayerData.metadata['dealerrep'] or 0
     PlayerData.metadata['craftingrep'] = PlayerData.metadata['craftingrep'] or 0
+    PlayerData.metadata['hackingxp'] = PlayerData.metadata['hackingxp'] or 0 -- Added for hacking xp
+    PlayerData.metadata['drugxp'] = PlayerData.metadata['drugxp'] or 0 -- Added for drugs
+    PlayerData.metadata['delivery'] = PlayerData.metadata['delivery'] or 0
+    PlayerData.metadata['garbage'] = PlayerData.metadata['garbage'] or 0
+    PlayerData.metadata['storerobbery'] = PlayerData.metadata['storerobbery'] or 0
+    PlayerData.metadata['boostingrep'] = PlayerData.metadata['boostingrep'] or 0
+    PlayerData.metadata['methruns'] = PlayerData.metadata['methruns'] or 0
+    PlayerData.metadata['boostingclass'] = PlayerData.metadata['boostingclass'] or 'D'
     PlayerData.metadata['attachmentcraftingrep'] = PlayerData.metadata['attachmentcraftingrep'] or 0
     PlayerData.metadata['currentapartment'] = PlayerData.metadata['currentapartment'] or nil
     PlayerData.metadata['jobrep'] = PlayerData.metadata['jobrep'] or {}
@@ -119,7 +128,7 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
         ['date'] = nil
     }
     PlayerData.metadata['licences'] = PlayerData.metadata['licences'] or {
-        ['driver'] = true,
+        ['driver'] = false,
         ['business'] = false,
         ['weapon'] = false
     }
@@ -129,6 +138,12 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
             apartmentType = nil,
             apartmentId = nil,
         }
+    }
+    PlayerData.metadata['crypto'] = PlayerData.metadata['crypto'] or {
+        ["shung"] = 0,
+        ["gne"] = 0,
+        ["xcoin"] = 0,
+        ["lme"] = 0
     }
     PlayerData.metadata['phonedata'] = PlayerData.metadata['phonedata'] or {
         SerialNumber = QBCore.Player.CreateSerialNumber(),
@@ -188,6 +203,12 @@ function QBCore.Player.CreatePlayer(PlayerData, Offline)
         TriggerEvent('QBCore:Player:SetPlayerData', self.PlayerData)
         TriggerClientEvent('QBCore:Player:SetPlayerData', self.PlayerData.source, self.PlayerData)
     end
+    -- qs smartphone 
+    function self.Functions.SetPhoneNumber(phone)
+        if not phone then return end
+        self.PlayerData.charinfo.phone = phone
+        self.Functions.UpdatePlayerData()
+    end
 
     function self.Functions.SetJob(job, grade)
         job = job:lower()
@@ -204,6 +225,21 @@ function QBCore.Player.CreatePlayer(PlayerData, Offline)
             self.PlayerData.job.grade.level = tonumber(grade)
             self.PlayerData.job.payment = jobgrade.payment or 30
             self.PlayerData.job.isboss = jobgrade.isboss or false
+
+            -- ZERIOOOOOO
+            exports["zerio-multijobs"]:GetJobs(self.PlayerData.citizenid, function(jobs)
+                local notFound = true
+                for i,v in pairs(jobs) do
+                    if v.name == job then
+                        notFound = false
+                    end
+                end
+                if notFound then
+                    exports["zerio-multijobs"]:AddJob(self.PlayerData.citizenid, job, tonumber(grade))
+                else
+                    exports["zerio-multijobs"]:UpdateJobRank(self.PlayerData.citizenid, job, tonumber(grade))
+                end
+            end)
         else
             self.PlayerData.job.grade = {}
             self.PlayerData.job.grade.name = 'No Grades'
@@ -291,14 +327,26 @@ function QBCore.Player.CreatePlayer(PlayerData, Offline)
 
         if not self.Offline then
             self.Functions.UpdatePlayerData()
-            if amount > 100000 then
+            if amount > 20000 then
                 TriggerEvent('qb-log:server:CreateLog', 'playermoney', 'AddMoney', 'lightgreen', '**' .. GetPlayerName(self.PlayerData.source) .. ' (citizenid: ' .. self.PlayerData.citizenid .. ' | id: ' .. self.PlayerData.source .. ')** $' .. amount .. ' (' .. moneytype .. ') added, new ' .. moneytype .. ' balance: ' .. self.PlayerData.money[moneytype] .. ' reason: ' .. reason, true)
             else
                 TriggerEvent('qb-log:server:CreateLog', 'playermoney', 'AddMoney', 'lightgreen', '**' .. GetPlayerName(self.PlayerData.source) .. ' (citizenid: ' .. self.PlayerData.citizenid .. ' | id: ' .. self.PlayerData.source .. ')** $' .. amount .. ' (' .. moneytype .. ') added, new ' .. moneytype .. ' balance: ' .. self.PlayerData.money[moneytype] .. ' reason: ' .. reason)
             end
-            TriggerClientEvent('hud:client:OnMoneyChange', self.PlayerData.source, moneytype, amount, false)
+            -- TriggerClientEvent('hud:client:OnMoneyChange', self.PlayerData.source, moneytype, amount, false)
             TriggerClientEvent('QBCore:Client:OnMoneyChange', self.PlayerData.source, moneytype, amount, "add", reason)
             TriggerEvent('QBCore:Server:OnMoneyChange', self.PlayerData.source, moneytype, amount, "add", reason)
+            if moneytype == 'bank' then
+                TriggerClientEvent('qb-phone:client:notify', self.PlayerData.source,{
+                    title = 'Bank',
+                    text = "$"..amount.." has been added to your bank!",
+                    icon = "./img/apps/banksign.png",
+                    timeout = 3500
+                })
+                -- TriggerClientEvent('qb-phone:client:RemoveBankMoney', self.PlayerData.source, amount)
+            else
+                -- exports['okokNotify']:Alert('Cash', "$"..amount.." has been added from your balance!", 3500, 'success')
+                TriggerClientEvent('okokNotify:Alert', self.PlayerData.source,'Cash', "$"..amount.." has been added to your cash!", 3500, 'success')
+            end
         end
 
         return true
@@ -332,6 +380,17 @@ function QBCore.Player.CreatePlayer(PlayerData, Offline)
             end
             TriggerClientEvent('QBCore:Client:OnMoneyChange', self.PlayerData.source, moneytype, amount, "remove", reason)
             TriggerEvent('QBCore:Server:OnMoneyChange', self.PlayerData.source, moneytype, amount, "remove", reason)
+            if moneytype == 'bank' then
+                TriggerClientEvent('qb-phone:client:notify', self.PlayerData.source,{
+                    title = 'Bank',
+                    text = "$"..amount.." has been removed from your bank!",
+                    icon = "./img/apps/banksign.png",
+                    timeout = 3500
+                })
+                -- TriggerClientEvent('qb-phone:client:RemoveBankMoney', self.PlayerData.source, amount)
+            else
+                TriggerClientEvent('okokNotify:Alert', self.PlayerData.source,'Cash', "$"..amount.." has been removed from your cash!", 3500, 'success')
+            end
         end
 
         return true
@@ -524,12 +583,12 @@ local playertables = { -- Add tables as needed
     { table = 'apartments' },
     { table = 'bank_accounts' },
     { table = 'crypto_transactions' },
-    { table = 'phone_invoices' },
-    { table = 'phone_messages' },
+    -- { table = 'phone_invoices' },
+    -- { table = 'phone_messages' },
     { table = 'playerskins' },
-    { table = 'player_contacts' },
+    -- { table = 'player_contacts' },
     { table = 'player_houses' },
-    { table = 'player_mails' },
+    -- { table = 'player_mails' },
     { table = 'player_outfits' },
     { table = 'player_vehicles' }
 }
@@ -694,4 +753,6 @@ function QBCore.Player.CreateSerialNumber()
     return SerialNumber
 end
 
-PaycheckInterval() -- This starts the paycheck system
+--PaycheckInterval() -- This starts the paycheck system
+
+

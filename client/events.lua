@@ -138,6 +138,8 @@ RegisterNetEvent('QBCore:Command:SpawnVehicle', function(vehName)
     SetVehicleDirtLevel(vehicle, 0.0)
     SetModelAsNoLongerNeeded(hash)
     TriggerEvent("vehiclekeys:client:SetOwner", QBCore.Functions.GetPlate(vehicle))
+    exports["mk_vehiclekeys"]:AddKey(vehicle)
+    TriggerServerEvent('MojiaVehicleKeys:server:AddVehicleKey', QBCore.Functions.GetPlate(vehicle), vehicle)
 end)
 
 RegisterNetEvent('QBCore:Command:DeleteVehicle', function()
@@ -156,27 +158,6 @@ RegisterNetEvent('QBCore:Command:DeleteVehicle', function()
             end
         end
     end
-end)
-
-RegisterNetEvent('QBCore:Client:VehicleInfo', function(info)
-    local plate = QBCore.Functions.GetPlate(info.vehicle)
-    local hasKeys = true
-
-    if GetResourceState('qb-vehiclekeys') == 'started' then
-        hasKeys = exports['qb-vehiclekeys']:HasKeys()
-    end
-
-    local data = {
-        vehicle = info.vehicle,
-        seat = info.seat,
-        name = info.modelName,
-        plate = plate,
-        driver = GetPedInVehicleSeat(info.vehicle, -1),
-        inseat = GetPedInVehicleSeat(info.vehicle, info.seat),
-        haskeys = hasKeys
-    }
-
-    TriggerEvent('QBCore:Client:'..info.event..'Vehicle', data)
 end)
 
 -- Other stuff
